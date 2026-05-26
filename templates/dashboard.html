@@ -9,6 +9,7 @@
     </div>
     <div style="display:flex;gap:12px;align-items:center;">
         <div id="notificationBannerArea"></div>
+        <a href="/api/exams/export" class="btn btn-secondary admin-only" target="_blank">📥 Download CSV</a>
         <button class="btn btn-primary admin-only" id="dashAddExamBtn" onclick="openDashExamModal()">
             ➕ Add Exam
         </button>
@@ -138,6 +139,12 @@
                     <label for="dashExamDate">Exam Date</label>
                     <input type="date" id="dashExamDate" class="form-control">
                 </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dashExamStartDate">Application Start Date</label>
+                    <input type="date" id="dashExamStartDate" class="form-control">
+                </div>
                 <div class="form-group">
                     <label for="dashExamDeadline">Application Deadline</label>
                     <input type="date" id="dashExamDeadline" class="form-control">
@@ -198,12 +205,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadDashboard();
 
-    if ('Notification' in window && Notification.permission === 'default') {
+    if (!localStorage.getItem('phoneSubscribed')) {
         const banner = document.getElementById('notificationBannerArea');
         banner.innerHTML = `
-            <div class="notification-banner">
-                <p>🔔 Enable notifications</p>
-                <button class="btn btn-sm btn-primary" onclick="requestNotifPermission(this)">Enable</button>
+            <div class="notification-banner" style="display:flex;gap:8px;align-items:center;">
+                <p>🔔 Get Phone Alerts:</p>
+                <input type="tel" id="notifPhone" placeholder="Enter Phone #" class="form-control" style="width:150px;padding:4px;font-size:0.9rem;">
+                <button class="btn btn-sm btn-primary" onclick="subscribePhone(this)">Subscribe</button>
             </div>
         `;
     }
@@ -301,6 +309,7 @@ function openDashExamModal(exam = null) {
         document.getElementById('dashExamName').value = exam.name;
         document.getElementById('dashExamCategory').value = exam.category;
         document.getElementById('dashExamDate').value = exam.exam_date || '';
+        document.getElementById('dashExamStartDate').value = exam.application_start_date || '';
         document.getElementById('dashExamDeadline').value = exam.application_deadline || '';
         document.getElementById('dashExamStatus').value = exam.status;
         document.getElementById('dashExamPriority').value = exam.priority;
@@ -334,6 +343,7 @@ async function submitDashExam(e) {
         name: document.getElementById('dashExamName').value,
         category: document.getElementById('dashExamCategory').value,
         exam_date: document.getElementById('dashExamDate').value || null,
+        application_start_date: document.getElementById('dashExamStartDate').value || null,
         application_deadline: document.getElementById('dashExamDeadline').value || null,
         status: document.getElementById('dashExamStatus').value,
         priority: document.getElementById('dashExamPriority').value,
@@ -381,11 +391,27 @@ async function confirmDashDelete() {
     }
 }
 
-function requestNotifPermission(btn) {
-    Notification.requestPermission().then(perm => {
+async function subscribePhone(btn) {
+    const input = document.getElementById('notifPhone');
+    const phone = input.value.trim();
+    if (!phone) {
+        showToast('Please enter a phone number', 'error');
+        return;
+    }
+
+    try {
+        await apiPost('/api/subscribe', { phone_number: phone });
+        localStorage.setItem('phoneSubscribed', 'true');
         btn.closest('.notification-banner').remove();
-        if (perm === 'granted') showToast('Notifications enabled!', 'success');
-    });
+        showToast('Subscribed to phone alerts!', 'success');
+        
+        // Also ask for browser permission just in case
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    } catch(e) {
+        showToast('Failed to subscribe. Invalid format?', 'error');
+    }
 }
 </script>
 {% endblock %}

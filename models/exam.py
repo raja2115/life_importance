@@ -40,6 +40,7 @@ class Exam(db.Model):
     name = db.Column(db.String(200), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     exam_date = db.Column(db.Date, nullable=True)
+    application_start_date = db.Column(db.Date, nullable=True)
     application_deadline = db.Column(db.Date, nullable=True)
     official_website = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(30), default='Upcoming')
@@ -58,6 +59,7 @@ class Exam(db.Model):
             'name': self.name,
             'category': self.category,
             'exam_date': self.exam_date.isoformat() if self.exam_date else None,
+            'application_start_date': self.application_start_date.isoformat() if self.application_start_date else None,
             'application_deadline': self.application_deadline.isoformat() if self.application_deadline else None,
             'official_website': self.official_website,
             'status': self.status,
@@ -69,3 +71,14 @@ class Exam(db.Model):
 
     def __repr__(self):
         return f'<Exam {self.name}>'
+
+class Subscriber(db.Model):
+    """Stores phone numbers for SMS/WhatsApp notifications."""
+    __tablename__ = 'subscribers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    phone_number = db.Column(db.String(20), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    def __repr__(self):
+        return f'<Subscriber {self.phone_number}>'

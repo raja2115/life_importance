@@ -1,6 +1,7 @@
 from flask_mail import Message
 from datetime import date, timedelta
-from models.exam import Exam
+from models.exam import Exam, Subscriber
+import os
 
 
 def send_reminder_email(app, mail, exam):
@@ -52,26 +53,49 @@ def send_reminder_email(app, mail, exam):
         return False
 
 
+def send_sms(phone, message):
+    """Mock SMS sending function. Replace with Twilio/Meta API in production."""
+    # Write to a mock log file instead of sending real SMS for free testing
+    with open('sms_log.txt', 'a', encoding='utf-8') as f:
+        f.write(f"[{date.today().isoformat()}] TO {phone}:\n{message}\n{'-'*30}\n")
+    print(f"📱 [SMS Mock] Sent to {phone}:\n{message}")
+    return True
+
 def check_and_send_reminders(app, mail):
-    """Check for exams within the next 3 days and send reminders."""
+    """Check for exams and send email/SMS reminders."""
     try:
         with app.app_context():
             today = date.today()
-            target = today + timedelta(days=3)
+            in_3_days = today + timedelta(days=3)
+            in_7_days = today + timedelta(days=7)
 
-            exams = Exam.query.filter(
-                Exam.exam_date >= today,
-                Exam.exam_date <= target,
-                Exam.status.in_(['Upcoming', 'Applied', 'Scheduled'])
-            ).all()
+            exams = Exam.query.filter(Exam.status.in_(['Upcoming', 'Applied', 'Scheduled'])).all()
+            subscribers = Subscriber.query.all()
 
             for exam in exams:
-                send_reminder_email(app, mail, exam)
+                alerts = []
+                
+                # 1. Application Starts Today
+                if exam.application_start_date == today:
+                    alerts.append(f"🟢 APPLICATION OPEN TODAY: {exam.name}")
+                
+                # 2. Application Deadline in 3 days
+                if exam.application_deadline == in_3_days:
+                    alerts.append(f"⏰ DEADLINE APPROACHING: {exam.name} ends in 3 days!")
+                
+                # 3. Exam in 7 days
+                if exam.exam_date == in_7_days:
+                    alerts.append(f"📚 EXAM IN 1 WEEK: {exam.name} is on {exam.exam_date.strftime('%b %d')}")
 
-            if exams:
-                print(f"[Scheduler] Sent reminders for {len(exams)} exam(s)")
-            else:
-                print(f"[Scheduler] No upcoming exams within 3 days")
+                # Send email (original logic)
+                if exam.exam_date and exam.exam_date <= (today + timedelta(days=3)) and exam.exam_date >= today:
+                    send_reminder_email(app, mail, exam)
+
+                # Send SMS/WhatsApp alerts if any triggers matched
+                if alerts and subscribers:
+                    message = "\n".join(alerts)
+                    for sub in subscribers:
+                        send_sms(sub.phone_number, message)
 
     except Exception as e:
         print(f"[Scheduler] Error checking reminders: {e}")

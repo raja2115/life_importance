@@ -1,6 +1,8 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, Response
 from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
+import csv
+import io
 from models import db
 from models.exam import Exam
 
@@ -83,6 +85,7 @@ def create_exam():
         name=data['name'],
         category=data.get('category', 'Banking'),
         exam_date=_parse_date(data.get('exam_date')),
+        application_start_date=_parse_date(data.get('application_start_date')),
         application_deadline=_parse_date(data.get('application_deadline')),
         official_website=data.get('official_website', ''),
         status=data.get('status', 'Upcoming'),
@@ -108,6 +111,7 @@ def update_exam(exam_id):
     exam.name = data.get('name', exam.name)
     exam.category = data.get('category', exam.category)
     exam.exam_date = _parse_date(data.get('exam_date')) if 'exam_date' in data else exam.exam_date
+    exam.application_start_date = _parse_date(data.get('application_start_date')) if 'application_start_date' in data else exam.application_start_date
     exam.application_deadline = _parse_date(data.get('application_deadline')) if 'application_deadline' in data else exam.application_deadline
     exam.official_website = data.get('official_website', exam.official_website)
     exam.status = data.get('status', exam.status)
@@ -126,6 +130,43 @@ def delete_exam(exam_id):
     db.session.delete(exam)
     db.session.commit()
     return jsonify({'message': 'Exam deleted successfully'})
+
+@exams_bp.route('/api/exams/export', methods=['GET'])
+@login_required
+def export_csv():
+    """Export all exams to CSV (admin only)."""
+    exams = Exam.query.order_by(Exam.exam_date.asc().nullslast()).all()
+    
+    # Create in-memory CSV
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # Write header
+    cw.writerow(['ID', 'Name', 'Category', 'Exam Date', 'Application Start', 'Application Deadline', 'Status', 'Priority', 'Website', 'Notes'])
+    
+    # Write data
+    for exam in exams:
+        cw.writerow([
+            exam.id,
+            exam.name,
+            exam.category,
+            exam.exam_date.isoformat() if exam.exam_date else '',
+            exam.application_start_date.isoformat() if exam.application_start_date else '',
+            exam.application_deadline.isoformat() if exam.application_deadline else '',
+            exam.status,
+            exam.priority,
+            exam.official_website or '',
+            exam.notes or ''
+        ])
+        
+    output = si.getvalue()
+    
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=exam_data.csv"}
+    )
+
 
 
 @exams_bp.route('/api/exams/stats', methods=['GET'])

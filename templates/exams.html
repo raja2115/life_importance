@@ -87,10 +87,15 @@
                     </select>
                 </div>
             </div>
-            <div class="form-row">
                 <div class="form-group">
                     <label for="examDate">Exam Date</label>
                     <input type="date" id="examDate" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="examStartDate">Application Start Date</label>
+                    <input type="date" id="examStartDate" class="form-control">
                 </div>
                 <div class="form-group">
                     <label for="examDeadline">Application Deadline</label>
@@ -267,6 +272,7 @@ function openExamModal(exam = null) {
         document.getElementById('examName').value = exam.name;
         document.getElementById('examCategory').value = exam.category;
         document.getElementById('examDate').value = exam.exam_date || '';
+        document.getElementById('examStartDate').value = exam.application_start_date || '';
         document.getElementById('examDeadline').value = exam.application_deadline || '';
         document.getElementById('examStatus').value = exam.status;
         document.getElementById('examPriority').value = exam.priority;
@@ -301,6 +307,7 @@ async function submitExam(e) {
         name: document.getElementById('examName').value,
         category: document.getElementById('examCategory').value,
         exam_date: document.getElementById('examDate').value || null,
+        application_start_date: document.getElementById('examStartDate').value || null,
         application_deadline: document.getElementById('examDeadline').value || null,
         status: document.getElementById('examStatus').value,
         priority: document.getElementById('examPriority').value,

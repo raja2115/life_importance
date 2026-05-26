@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
+import re
 from models import db
-from models.exam import AdminUser
+from models.exam import AdminUser, Subscriber
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -45,3 +46,26 @@ def auth_status():
         'logged_in': current_user.is_authenticated,
         'username': current_user.username if current_user.is_authenticated else None
     })
+
+@auth_bp.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    """Subscribe a phone number for notifications."""
+    data = request.get_json()
+    if not data or not data.get('phone_number'):
+        return jsonify({'error': 'Phone number is required'}), 400
+
+    phone = data['phone_number'].strip()
+    
+    # Basic validation (allow digits, +, spaces, dashes)
+    if not re.match(r'^[\d\+\-\s\(\)]{7,20}$', phone):
+        return jsonify({'error': 'Invalid phone number format'}), 400
+
+    # Check if exists
+    existing = Subscriber.query.filter_by(phone_number=phone).first()
+    if not existing:
+        sub = Subscriber(phone_number=phone)
+        db.session.add(sub)
+        db.session.commit()
+    
+    return jsonify({'message': 'Subscribed successfully'})
+
