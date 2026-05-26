@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — ExamTrack AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 id="greeting">📊 Dashboard</h1>
+        <p class="subtitle">Your exam preparation at a glance</p>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+        <div id="notificationBannerArea"></div>
+        <button class="btn btn-primary admin-only" id="dashAddExamBtn" onclick="openDashExamModal()">
+            ➕ Add Exam
+        </button>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="dashboard-grid" id="statsGrid">
+    <div class="stat-card total animate-in">
+        <div class="stat-icon">📝</div>
+        <div class="stat-info">
+            <h3 id="totalExams">-</h3>
+            <p>Total Exams</p>
+        </div>
+    </div>
+    <div class="stat-card upcoming animate-in">
+        <div class="stat-icon">📅</div>
+        <div class="stat-info">
+            <h3 id="upcomingCount">-</h3>
+            <p>Upcoming</p>
+        </div>
+    </div>
+    <div class="stat-card month animate-in">
+        <div class="stat-icon">🗓️</div>
+        <div class="stat-info">
+            <h3 id="thisMonth">-</h3>
+            <p>This Month</p>
+        </div>
+    </div>
+    <div class="stat-card priority animate-in">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-info">
+            <h3 id="highPriority">-</h3>
+            <p>High Priority</p>
+        </div>
+    </div>
+</div>
+
+<!-- Category Breakdown -->
+<div class="section-header">
+    <h2>📂 Categories</h2>
+</div>
+<div class="category-grid" id="categoryGrid">
+    <div class="category-card banking animate-in" onclick="window.location='/exams?category=Banking'">
+        <span class="cat-count" id="catBanking">0</span>
+        <span class="cat-name">Banking</span>
+    </div>
+    <div class="category-card ssc animate-in" onclick="window.location='/exams?category=SSC'">
+        <span class="cat-count" id="catSSC">0</span>
+        <span class="cat-name">SSC</span>
+    </div>
+    <div class="category-card upsc animate-in" onclick="window.location='/exams?category=UPSC'">
+        <span class="cat-count" id="catUPSC">0</span>
+        <span class="cat-name">UPSC</span>
+    </div>
+    <div class="category-card tnpsc animate-in" onclick="window.location='/exams?category=TNPSC'">
+        <span class="cat-count" id="catTNPSC">0</span>
+        <span class="cat-name">TNPSC</span>
+    </div>
+    <div class="category-card railway animate-in" onclick="window.location='/exams?category=Railway'">
+        <span class="cat-count" id="catRailway">0</span>
+        <span class="cat-name">Railway</span>
+    </div>
+    <div class="category-card group animate-in" onclick="window.location='/exams?category=Group'">
+        <span class="cat-count" id="catGroup">0</span>
+        <span class="cat-name">Group</span>
+    </div>
+    <div class="category-card other animate-in" onclick="window.location='/exams?category=Other'">
+        <span class="cat-count" id="catOther">0</span>
+        <span class="cat-name">Other</span>
+    </div>
+</div>
+
+<!-- Upcoming Exams with Countdown -->
+<div class="section-header">
+    <h2>⏰ Upcoming Exams</h2>
+    <a href="/exams" class="btn btn-sm btn-secondary">View All →</a>
+</div>
+<div class="exam-cards" id="upcomingExams">
+    <div class="empty-state" id="upcomingEmpty">
+        <div class="empty-icon">📭</div>
+        <h3>No upcoming exams</h3>
+        <p>Add your first exam to see it here!</p>
+    </div>
+</div>
+
+<!-- Add/Edit Exam Modal (Dashboard) -->
+<div class="modal-overlay" id="dashExamModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="dashModalTitle">➕ Add New Exam</h2>
+            <button class="modal-close" onclick="closeDashExamModal()">✕</button>
+        </div>
+        <form id="dashExamForm" onsubmit="submitDashExam(event)">
+            <input type="hidden" id="dashExamId">
+            <div class="form-group">
+                <label for="dashExamName">Exam Name *</label>
+                <input type="text" id="dashExamName" class="form-control" placeholder="e.g., SBI PO Prelims 2026" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dashExamCategory">Category *</label>
+                    <select id="dashExamCategory" class="form-control" required>
+                        <option value="Banking">🏦 Banking</option>
+                        <option value="SSC">📋 SSC</option>
+                        <option value="UPSC">🏛️ UPSC</option>
+                        <option value="TNPSC">🌴 TNPSC</option>
+                        <option value="Railway">🚂 Railway</option>
+                        <option value="Group">👥 Group</option>
+                        <option value="Other">📌 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dashExamPriority">Priority</label>
+                    <select id="dashExamPriority" class="form-control">
+                        <option value="High">🔴 High</option>
+                        <option value="Medium" selected>🟡 Medium</option>
+                        <option value="Low">🟢 Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dashExamDate">Exam Date</label>
+                    <input type="date" id="dashExamDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="dashExamDeadline">Application Deadline</label>
+                    <input type="date" id="dashExamDeadline" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="dashExamStatus">Status</label>
+                    <select id="dashExamStatus" class="form-control">
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Applied">Applied</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Missed">Missed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dashExamWebsite">Official Website</label>
+                    <input type="url" id="dashExamWebsite" class="form-control" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="dashExamNotes">Notes</label>
+                <textarea id="dashExamNotes" class="form-control" placeholder="Additional notes..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDashExamModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">💾 Save Exam</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal (Dashboard) -->
+<div class="modal-overlay" id="dashDeleteModal">
+    <div class="modal" style="max-width: 400px; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">⚠️</div>
+        <h2 style="margin-bottom: 8px; color: var(--danger);">Delete Exam?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;" id="dashDeleteExamName">Are you sure?</p>
+        <div class="modal-footer" style="justify-content: center; border: none; padding-top: 0;">
+            <button class="btn btn-secondary" onclick="closeDashDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDashDelete()">🗑️ Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let dashDeleteExamId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const hour = new Date().getHours();
+    let greeting = '🌅 Good Morning';
+    if (hour >= 12 && hour < 17) greeting = '☀️ Good Afternoon';
+    else if (hour >= 17) greeting = '🌙 Good Evening';
+    document.getElementById('greeting').textContent = greeting + '!';
+
+    loadDashboard();
+
+    if ('Notification' in window && Notification.permission === 'default') {
+        const banner = document.getElementById('notificationBannerArea');
+        banner.innerHTML = `
+            <div class="notification-banner">
+                <p>🔔 Enable notifications</p>
+                <button class="btn btn-sm btn-primary" onclick="requestNotifPermission(this)">Enable</button>
+            </div>
+        `;
+    }
+});
+
+async function loadDashboard() {
+    await loadStats();
+    await loadUpcomingExams();
+}
+
+async function loadStats() {
+    try {
+        const stats = await apiGet('/api/exams/stats');
+        document.getElementById('totalExams').textContent = stats.total_exams;
+        document.getElementById('upcomingCount').textContent = stats.upcoming_count;
+        document.getElementById('thisMonth').textContent = stats.this_month;
+        document.getElementById('highPriority').textContent = stats.high_priority;
+        if (stats.category_counts) {
+            document.getElementById('catBanking').textContent = stats.category_counts.Banking || 0;
+            document.getElementById('catSSC').textContent = stats.category_counts.SSC || 0;
+            document.getElementById('catUPSC').textContent = stats.category_counts.UPSC || 0;
+            document.getElementById('catTNPSC').textContent = stats.category_counts.TNPSC || 0;
+            document.getElementById('catRailway').textContent = stats.category_counts.Railway || 0;
+            document.getElementById('catGroup').textContent = stats.category_counts.Group || 0;
+            document.getElementById('catOther').textContent = stats.category_counts.Other || 0;
+        }
+    } catch(e) { console.error('Stats error:', e); }
+}
+
+async function loadUpcomingExams() {
+    try {
+        const exams = await apiGet('/api/exams/upcoming');
+        const container = document.getElementById('upcomingExams');
+
+        if (exams.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h3>No upcoming exams</h3>
+                    <p>Add your first exam to see it here!</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = '';
+
+        exams.forEach((exam, i) => {
+            const card = document.createElement('div');
+            card.className = 'exam-card animate-in';
+            card.style.animationDelay = `${i * 0.1}s`;
+
+            const catClass = exam.category.toLowerCase();
+            const dateStr = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD';
+            const deadlineStr = exam.application_deadline ? new Date(exam.application_deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+            const escapedName = exam.name.replace(/'/g, "\\'");
+
+            card.innerHTML = `
+                <div class="exam-card-header">
+                    <div>
+                        <div class="exam-name">${exam.name}</div>
+                        <span class="exam-category ${catClass}">${exam.category}</span>
+                    </div>
+                    <span class="priority-dot ${exam.priority.toLowerCase()}">${exam.priority}</span>
+                </div>
+                <div class="exam-details">
+                    <div class="detail-row">📅 Exam: <strong>${dateStr}</strong></div>
+                    <div class="detail-row">⏰ Deadline: <strong>${deadlineStr}</strong></div>
+                    <div class="detail-row"><span class="status-badge ${exam.status.toLowerCase()}">${exam.status}</span></div>
+                    ${exam.official_website ? `<a href="${exam.official_website}" target="_blank" class="exam-link">🔗 Official Website</a>` : ''}
+                </div>
+                ${exam.exam_date ? `<div class="countdown-container" data-exam-date="${exam.exam_date}" id="countdown-${exam.id}"></div>` : ''}
+                <div class="exam-actions admin-only">
+                    <button class="btn btn-sm btn-secondary" onclick="editDashExam(${exam.id})">✏️ Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="openDashDeleteModal(${exam.id}, '${escapedName}')">🗑️ Delete</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        initAllCountdowns();
+        showAdminControls();
+    } catch(e) { console.error('Upcoming error:', e); }
+}
+
+// ─── ADD / EDIT MODAL ────────────────────────────────
+
+function openDashExamModal(exam = null) {
+    const modal = document.getElementById('dashExamModal');
+    const title = document.getElementById('dashModalTitle');
+    const form = document.getElementById('dashExamForm');
+
+    if (exam) {
+        title.textContent = '✏️ Edit Exam';
+        document.getElementById('dashExamId').value = exam.id;
+        document.getElementById('dashExamName').value = exam.name;
+        document.getElementById('dashExamCategory').value = exam.category;
+        document.getElementById('dashExamDate').value = exam.exam_date || '';
+        document.getElementById('dashExamDeadline').value = exam.application_deadline || '';
+        document.getElementById('dashExamStatus').value = exam.status;
+        document.getElementById('dashExamPriority').value = exam.priority;
+        document.getElementById('dashExamWebsite').value = exam.official_website || '';
+        document.getElementById('dashExamNotes').value = exam.notes || '';
+    } else {
+        title.textContent = '➕ Add New Exam';
+        form.reset();
+        document.getElementById('dashExamId').value = '';
+    }
+    modal.classList.add('active');
+}
+
+function closeDashExamModal() {
+    document.getElementById('dashExamModal').classList.remove('active');
+}
+
+async function editDashExam(id) {
+    try {
+        const exam = await apiGet(`/api/exams/${id}`);
+        openDashExamModal(exam);
+    } catch(e) {
+        showToast('Failed to load exam details', 'error');
+    }
+}
+
+async function submitDashExam(e) {
+    e.preventDefault();
+    const id = document.getElementById('dashExamId').value;
+    const data = {
+        name: document.getElementById('dashExamName').value,
+        category: document.getElementById('dashExamCategory').value,
+        exam_date: document.getElementById('dashExamDate').value || null,
+        application_deadline: document.getElementById('dashExamDeadline').value || null,
+        status: document.getElementById('dashExamStatus').value,
+        priority: document.getElementById('dashExamPriority').value,
+        official_website: document.getElementById('dashExamWebsite').value || null,
+        notes: document.getElementById('dashExamNotes').value || null,
+    };
+
+    try {
+        if (id) {
+            await apiPut(`/api/exams/${id}`, data);
+            showToast('Exam updated successfully!', 'success');
+        } else {
+            await apiPost('/api/exams', data);
+            showToast('Exam created successfully!', 'success');
+        }
+        closeDashExamModal();
+        loadDashboard();
+    } catch(e) {
+        showToast(e.message || 'Failed to save. Are you logged in as admin?', 'error');
+    }
+}
+
+// ─── DELETE MODAL ────────────────────────────────────
+
+function openDashDeleteModal(id, name) {
+    dashDeleteExamId = id;
+    document.getElementById('dashDeleteExamName').textContent = `Delete "${name}"? This cannot be undone.`;
+    document.getElementById('dashDeleteModal').classList.add('active');
+}
+
+function closeDashDeleteModal() {
+    document.getElementById('dashDeleteModal').classList.remove('active');
+    dashDeleteExamId = null;
+}
+
+async function confirmDashDelete() {
+    if (!dashDeleteExamId) return;
+    try {
+        await apiDelete(`/api/exams/${dashDeleteExamId}`);
+        showToast('Exam deleted successfully!', 'success');
+        closeDashDeleteModal();
+        loadDashboard();
+    } catch(e) {
+        showToast('Failed to delete. Are you logged in as admin?', 'error');
+    }
+}
+
+function requestNotifPermission(btn) {
+    Notification.requestPermission().then(perm => {
+        btn.closest('.notification-banner').remove();
+        if (perm === 'granted') showToast('Notifications enabled!', 'success');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,398 @@
+{% extends "base.html" %}
+{% block title %}Exams — ExamTrack AI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>📝 All Exams</h1>
+        <p class="subtitle">Manage and track your exam schedule</p>
+    </div>
+    <button class="btn btn-primary admin-only" id="addExamBtn" onclick="openExamModal()">
+        ➕ Add Exam
+    </button>
+</div>
+
+<!-- Search -->
+<div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-bar" id="searchInput" placeholder="Search exams by name, category...">
+</div>
+
+<!-- Category Filters -->
+<div class="filter-bar" id="categoryFilters">
+    <button class="filter-chip active" data-filter="All">All</button>
+    <button class="filter-chip" data-filter="Banking">🏦 Banking</button>
+    <button class="filter-chip" data-filter="SSC">📋 SSC</button>
+    <button class="filter-chip" data-filter="UPSC">🏛️ UPSC</button>
+    <button class="filter-chip" data-filter="TNPSC">🌴 TNPSC</button>
+    <button class="filter-chip" data-filter="Railway">🚂 Railway</button>
+    <button class="filter-chip" data-filter="Group">👥 Group</button>
+    <button class="filter-chip" data-filter="Other">📌 Other</button>
+</div>
+
+<!-- Status Filters -->
+<div class="filter-bar" id="statusFilters">
+    <button class="filter-chip active" data-status="All">All Status</button>
+    <button class="filter-chip" data-status="Upcoming">Upcoming</button>
+    <button class="filter-chip" data-status="Applied">Applied</button>
+    <button class="filter-chip" data-status="Scheduled">Scheduled</button>
+    <button class="filter-chip" data-status="Completed">Completed</button>
+    <button class="filter-chip" data-status="Missed">Missed</button>
+</div>
+
+<!-- Exams Table (Desktop) -->
+<div class="exam-table-container" id="examTableContainer">
+    <table class="exam-table" id="examTable">
+        <thead>
+            <tr>
+                <th>Exam Name</th>
+                <th>Category</th>
+                <th>Exam Date</th>
+                <th>Deadline</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th class="admin-only">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="examTableBody">
+            <!-- Rows filled by JS -->
+        </tbody>
+    </table>
+</div>
+
+<!-- Exams Cards (Mobile) -->
+<div class="exam-cards" id="examCardsContainer" style="display:none;">
+    <!-- Cards filled by JS -->
+</div>
+
+<!-- Empty State -->
+<div class="empty-state hidden" id="examEmpty">
+    <div class="empty-icon">📭</div>
+    <h3>No exams found</h3>
+    <p>Try adjusting your filters or add a new exam.</p>
+</div>
+
+<!-- Add/Edit Exam Modal -->
+<div class="modal-overlay" id="examModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">➕ Add New Exam</h2>
+            <button class="modal-close" onclick="closeExamModal()">✕</button>
+        </div>
+        <form id="examForm" onsubmit="submitExam(event)">
+            <input type="hidden" id="examId">
+            <div class="form-group">
+                <label for="examName">Exam Name *</label>
+                <input type="text" id="examName" class="form-control" placeholder="e.g., SBI PO Prelims 2026" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="examCategory">Category *</label>
+                    <select id="examCategory" class="form-control" required>
+                        <option value="Banking">🏦 Banking</option>
+                        <option value="SSC">📋 SSC</option>
+                        <option value="UPSC">🏛️ UPSC</option>
+                        <option value="TNPSC">🌴 TNPSC</option>
+                        <option value="Railway">🚂 Railway</option>
+                        <option value="Group">👥 Group</option>
+                        <option value="Other">📌 Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="examPriority">Priority</label>
+                    <select id="examPriority" class="form-control">
+                        <option value="High">🔴 High</option>
+                        <option value="Medium" selected>🟡 Medium</option>
+                        <option value="Low">🟢 Low</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="examDate">Exam Date</label>
+                    <input type="date" id="examDate" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="examDeadline">Application Deadline</label>
+                    <input type="date" id="examDeadline" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="examStatus">Status</label>
+                    <select id="examStatus" class="form-control">
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Applied">Applied</option>
+                        <option value="Scheduled">Scheduled</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Missed">Missed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="examWebsite">Official Website</label>
+                    <input type="url" id="examWebsite" class="form-control" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="examNotes">Notes</label>
+                <textarea id="examNotes" class="form-control" placeholder="Additional notes about this exam..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeExamModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">💾 Save Exam</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width: 400px; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">⚠️</div>
+        <h2 style="margin-bottom: 8px; color: var(--danger);">Delete Exam?</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 24px;" id="deleteExamName">Are you sure?</p>
+        <div class="modal-footer" style="justify-content: center; border: none; padding-top: 0;">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">🗑️ Delete</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentCategory = 'All';
+let currentStatus = 'All';
+let searchQuery = '';
+let deleteExamId = null;
+
+// Load exams on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadExams();
+    setupFilters();
+    setupSearch();
+    handleResponsiveView();
+    window.addEventListener('resize', handleResponsiveView);
+
+    // Check URL params for initial filter
+    const params = new URLSearchParams(window.location.search);
+    const cat = params.get('category');
+    if (cat) {
+        currentCategory = cat;
+        document.querySelectorAll('#categoryFilters .filter-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === cat);
+        });
+        loadExams();
+    }
+});
+
+function handleResponsiveView() {
+    const isMobile = window.innerWidth <= 768;
+    document.getElementById('examTableContainer').style.display = isMobile ? 'none' : 'block';
+    document.getElementById('examCardsContainer').style.display = isMobile ? 'grid' : 'none';
+}
+
+async function loadExams() {
+    try {
+        let url = '/api/exams?';
+        if (currentCategory !== 'All') url += `category=${currentCategory}&`;
+        if (currentStatus !== 'All') url += `status=${currentStatus}&`;
+        if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
+
+        const exams = await apiGet(url);
+        renderExamTable(exams);
+        renderExamCards(exams);
+
+        document.getElementById('examEmpty').classList.toggle('hidden', exams.length > 0);
+        document.getElementById('examTableContainer').style.display = (exams.length === 0 || window.innerWidth <= 768) ? 'none' : 'block';
+
+        // Show edit/delete buttons if admin is logged in
+        showAdminControls();
+    } catch(e) {
+        console.error('Load exams error:', e);
+        showToast('Failed to load exams', 'error');
+    }
+}
+
+function renderExamTable(exams) {
+    const tbody = document.getElementById('examTableBody');
+    tbody.innerHTML = exams.map(exam => {
+        const dateStr = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'TBD';
+        const deadlineStr = exam.application_deadline ? new Date(exam.application_deadline).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'N/A';
+        return `
+            <tr>
+                <td>
+                    <strong>${exam.name}</strong>
+                    ${exam.official_website ? `<br><a href="${exam.official_website}" target="_blank" class="exam-link">🔗 Website</a>` : ''}
+                </td>
+                <td><span class="exam-category ${exam.category.toLowerCase()}" style="font-size:0.75rem;padding:3px 10px;border-radius:999px;color:#fff;display:inline-block;">${exam.category}</span></td>
+                <td>${dateStr}</td>
+                <td>${deadlineStr}</td>
+                <td><span class="status-badge ${exam.status.toLowerCase()}">${exam.status}</span></td>
+                <td><span class="priority-dot ${exam.priority.toLowerCase()}">${exam.priority}</span></td>
+                <td class="admin-only">
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm btn-secondary" onclick="editExam(${exam.id})">✏️</button>
+                        <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${exam.id}, '${exam.name.replace(/'/g, "\\'")}')">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function renderExamCards(exams) {
+    const container = document.getElementById('examCardsContainer');
+    container.innerHTML = exams.map((exam, i) => {
+        const dateStr = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'TBD';
+        const deadlineStr = exam.application_deadline ? new Date(exam.application_deadline).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'N/A';
+        const catClass = exam.category.toLowerCase();
+        return `
+            <div class="exam-card animate-in" style="animation-delay:${i*0.05}s">
+                <div class="exam-card-header">
+                    <div>
+                        <div class="exam-name">${exam.name}</div>
+                        <span class="exam-category ${catClass}">${exam.category}</span>
+                    </div>
+                    <span class="priority-dot ${exam.priority.toLowerCase()}">${exam.priority}</span>
+                </div>
+                <div class="exam-details">
+                    <div class="detail-row">📅 Exam: <strong>${dateStr}</strong></div>
+                    <div class="detail-row">⏰ Deadline: <strong>${deadlineStr}</strong></div>
+                    <div class="detail-row"><span class="status-badge ${exam.status.toLowerCase()}">${exam.status}</span></div>
+                    ${exam.official_website ? `<a href="${exam.official_website}" target="_blank" class="exam-link">🔗 Official Website</a>` : ''}
+                    ${exam.notes ? `<div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">📝 ${exam.notes}</div>` : ''}
+                </div>
+                <div class="exam-actions admin-only">
+                    <button class="btn btn-sm btn-secondary" onclick="editExam(${exam.id})">✏️ Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${exam.id}, '${exam.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function setupFilters() {
+    document.querySelectorAll('#categoryFilters .filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('#categoryFilters .filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentCategory = chip.dataset.filter;
+            loadExams();
+        });
+    });
+
+    document.querySelectorAll('#statusFilters .filter-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('#statusFilters .filter-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            currentStatus = chip.dataset.status;
+            loadExams();
+        });
+    });
+}
+
+function setupSearch() {
+    let timeout;
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            searchQuery = e.target.value;
+            loadExams();
+        }, 300);
+    });
+}
+
+// ─── MODAL FUNCTIONS ────────────────────────
+
+function openExamModal(exam = null) {
+    const modal = document.getElementById('examModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('examForm');
+
+    if (exam) {
+        title.textContent = '✏️ Edit Exam';
+        document.getElementById('examId').value = exam.id;
+        document.getElementById('examName').value = exam.name;
+        document.getElementById('examCategory').value = exam.category;
+        document.getElementById('examDate').value = exam.exam_date || '';
+        document.getElementById('examDeadline').value = exam.application_deadline || '';
+        document.getElementById('examStatus').value = exam.status;
+        document.getElementById('examPriority').value = exam.priority;
+        document.getElementById('examWebsite').value = exam.official_website || '';
+        document.getElementById('examNotes').value = exam.notes || '';
+    } else {
+        title.textContent = '➕ Add New Exam';
+        form.reset();
+        document.getElementById('examId').value = '';
+    }
+
+    modal.classList.add('active');
+}
+
+function closeExamModal() {
+    document.getElementById('examModal').classList.remove('active');
+}
+
+async function editExam(id) {
+    try {
+        const exam = await apiGet(`/api/exams/${id}`);
+        openExamModal(exam);
+    } catch(e) {
+        showToast('Failed to load exam', 'error');
+    }
+}
+
+async function submitExam(e) {
+    e.preventDefault();
+    const id = document.getElementById('examId').value;
+    const data = {
+        name: document.getElementById('examName').value,
+        category: document.getElementById('examCategory').value,
+        exam_date: document.getElementById('examDate').value || null,
+        application_deadline: document.getElementById('examDeadline').value || null,
+        status: document.getElementById('examStatus').value,
+        priority: document.getElementById('examPriority').value,
+        official_website: document.getElementById('examWebsite').value || null,
+        notes: document.getElementById('examNotes').value || null,
+    };
+
+    try {
+        if (id) {
+            await apiPut(`/api/exams/${id}`, data);
+            showToast('Exam updated successfully!', 'success');
+        } else {
+            await apiPost('/api/exams', data);
+            showToast('Exam created successfully!', 'success');
+        }
+        closeExamModal();
+        loadExams();
+    } catch(e) {
+        showToast(e.message || 'Failed to save exam. Are you logged in?', 'error');
+    }
+}
+
+function openDeleteModal(id, name) {
+    deleteExamId = id;
+    document.getElementById('deleteExamName').textContent = `Delete "${name}"? This cannot be undone.`;
+    document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    deleteExamId = null;
+}
+
+async function confirmDelete() {
+    if (!deleteExamId) return;
+    try {
+        await apiDelete(`/api/exams/${deleteExamId}`);
+        showToast('Exam deleted successfully!', 'success');
+        closeDeleteModal();
+        loadExams();
+    } catch(e) {
+        showToast('Failed to delete exam. Are you logged in?', 'error');
+    }
+}
+</script>
+{% endblock %}

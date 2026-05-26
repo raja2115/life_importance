@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ExamTrack AI - Your intelligent personal exam tracker for Banking, SSC, UPSC, TNPSC, Railway, and Group exams.">
+    <title>{% block title %}ExamTrack AI{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <a href="/" class="navbar-brand">
+            <span class="logo-icon">📚</span>
+            <span>ExamTrack AI</span>
+        </a>
+
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/dashboard" id="nav-dashboard">📊 Dashboard</a></li>
+            <li><a href="/exams" id="nav-exams">📝 Exams</a></li>
+            <li><a href="/calendar" id="nav-calendar">📅 Calendar</a></li>
+        </ul>
+
+        <div class="navbar-actions">
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <span class="icon-moon">🌙</span>
+                <span class="icon-sun">☀️</span>
+            </button>
+            <a href="/login" class="btn btn-sm btn-primary" id="loginBtn">🔐 Login</a>
+            <a href="/logout" class="btn btn-sm btn-secondary hidden" id="logoutBtn">🚪 Logout</a>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- CHATBOT FAB -->
+    <button class="chatbot-fab" id="chatbotFab" aria-label="Open AI Assistant">🤖</button>
+
+    <!-- CHATBOT WINDOW -->
+    <div class="chatbot-window" id="chatbotWindow">
+        <div class="chatbot-header">
+            <h3><span class="status-dot"></span> AI Assistant</h3>
+            <button class="chatbot-close" id="chatbotClose" aria-label="Close chat">✕</button>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <!-- Messages inserted by JS -->
+        </div>
+        <div class="quick-replies" id="quickReplies">
+            <button class="quick-reply-btn" data-msg="Show upcoming exams">📅 Upcoming</button>
+            <button class="quick-reply-btn" data-msg="Show stats">📊 Stats</button>
+            <button class="quick-reply-btn" data-msg="help">💡 Help</button>
+        </div>
+        <div class="chatbot-input-area">
+            <input type="text" class="chatbot-input" id="chatInput" placeholder="Type a message..." autocomplete="off">
+            <button class="chatbot-send" id="chatSend" aria-label="Send message">➤</button>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- SCRIPTS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/countdown.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+
+    <script>
+        // Restore theme from localStorage
+        (function() {
+            const saved = localStorage.getItem('examtrack-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+</body>
+</html>
