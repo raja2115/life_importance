@@ -73,23 +73,26 @@ def create_app():
             db.session.commit()
             print(f"✅ Default admin user created: {admin.username}")
 
-    # Setup scheduler for daily reminders
-    try:
-        from apscheduler.schedulers.background import BackgroundScheduler
-        from utils.email_sender import check_and_send_reminders
+    # Setup scheduler for daily reminders (skip on Vercel serverless)
+    if not os.getenv('VERCEL'):
+        try:
+            from apscheduler.schedulers.background import BackgroundScheduler
+            from utils.email_sender import check_and_send_reminders
 
-        scheduler = BackgroundScheduler()
-        scheduler.add_job(
-            func=lambda: check_and_send_reminders(app, mail),
-            trigger='cron',
-            hour=8,
-            minute=0,
-            id='daily_reminders'
-        )
-        scheduler.start()
-        print("✅ Daily reminder scheduler started (8:00 AM)")
-    except Exception as e:
-        print(f"⚠️  Scheduler setup skipped: {e}")
+            scheduler = BackgroundScheduler()
+            scheduler.add_job(
+                func=lambda: check_and_send_reminders(app, mail),
+                trigger='cron',
+                hour=8,
+                minute=0,
+                id='daily_reminders'
+            )
+            scheduler.start()
+            print("✅ Daily reminder scheduler started (8:00 AM)")
+        except Exception as e:
+            print(f"⚠️  Scheduler setup skipped: {e}")
+    else:
+        print("⚠️  Scheduler skipped (running on Vercel serverless)")
 
     return app
 
