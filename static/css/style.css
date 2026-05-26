@@ -1538,8 +1538,8 @@ textarea.form-control {
 
 /* ─── HIDDEN UTILITY ───────────────────────────────────────── */
 .hidden { display: none !important; }
-.admin-only { display: none; }
-.admin-only.visible { display: inline-flex; }
+.admin-only { display: none !important; }
+.admin-only.visible { display: flex !important; }
 
 /* ─── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 768px) {
