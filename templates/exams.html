@@ -40,28 +40,8 @@
     <button class="filter-chip" data-status="Missed">Missed</button>
 </div>
 
-<!-- Exams Table (Desktop) -->
-<div class="exam-table-container" id="examTableContainer">
-    <table class="exam-table" id="examTable">
-        <thead>
-            <tr>
-                <th>Exam Name</th>
-                <th>Category</th>
-                <th>Exam Date</th>
-                <th>Deadline</th>
-                <th>Status</th>
-                <th>Priority</th>
-                <th class="admin-only">Actions</th>
-            </tr>
-        </thead>
-        <tbody id="examTableBody">
-            <!-- Rows filled by JS -->
-        </tbody>
-    </table>
-</div>
-
-<!-- Exams Cards (Mobile) -->
-<div class="exam-cards" id="examCardsContainer" style="display:none;">
+<!-- Exams Cards Grid (Universal) -->
+<div class="exam-cards" id="examCardsContainer">
     <!-- Cards filled by JS -->
 </div>
 
@@ -171,8 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadExams();
     setupFilters();
     setupSearch();
-    handleResponsiveView();
-    window.addEventListener('resize', handleResponsiveView);
 
     // Check URL params for initial filter
     const params = new URLSearchParams(window.location.search);
@@ -186,12 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function handleResponsiveView() {
-    const isMobile = window.innerWidth <= 768;
-    document.getElementById('examTableContainer').style.display = isMobile ? 'none' : 'block';
-    document.getElementById('examCardsContainer').style.display = isMobile ? 'grid' : 'none';
-}
-
 async function loadExams() {
     try {
         let url = '/api/exams?';
@@ -200,11 +172,13 @@ async function loadExams() {
         if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
 
         const exams = await apiGet(url);
-        renderExamTable(exams);
         renderExamCards(exams);
 
         document.getElementById('examEmpty').classList.toggle('hidden', exams.length > 0);
-        document.getElementById('examTableContainer').style.display = (exams.length === 0 || window.innerWidth <= 768) ? 'none' : 'block';
+        document.getElementById('examCardsContainer').style.display = exams.length === 0 ? 'none' : 'grid';
+
+        // Initialize countdown timers
+        if(typeof initAllCountdowns === 'function') initAllCountdowns();
 
         // Show edit/delete buttons if admin is logged in
         showAdminControls();
@@ -214,58 +188,35 @@ async function loadExams() {
     }
 }
 
-function renderExamTable(exams) {
-    const tbody = document.getElementById('examTableBody');
-    tbody.innerHTML = exams.map(exam => {
-        const dateStr = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'TBD';
-        const deadlineStr = exam.application_deadline ? new Date(exam.application_deadline).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'N/A';
-        return `
-            <tr>
-                <td>
-                    <strong>${exam.name}</strong>
-                    ${exam.official_website ? `<br><a href="${exam.official_website}" target="_blank" class="exam-link">🔗 Website</a>` : ''}
-                </td>
-                <td><span class="exam-category ${exam.category.toLowerCase()}" style="font-size:0.75rem;padding:3px 10px;border-radius:999px;color:#fff;display:inline-block;">${exam.category}</span></td>
-                <td>${dateStr}</td>
-                <td>${deadlineStr}</td>
-                <td><span class="status-badge ${exam.status.toLowerCase()}">${exam.status}</span></td>
-                <td><span class="priority-dot ${exam.priority.toLowerCase()}">${exam.priority}</span></td>
-                <td class="admin-only">
-                    <div style="display:flex;gap:6px;">
-                        <button class="btn btn-sm btn-secondary" onclick="editExam(${exam.id})">✏️</button>
-                        <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${exam.id}, '${exam.name.replace(/'/g, "\\'")}')">🗑️</button>
-                    </div>
-                </td>
-            </tr>
-        `;
-    }).join('');
-}
-
 function renderExamCards(exams) {
     const container = document.getElementById('examCardsContainer');
     container.innerHTML = exams.map((exam, i) => {
         const dateStr = exam.exam_date ? new Date(exam.exam_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'TBD';
         const deadlineStr = exam.application_deadline ? new Date(exam.application_deadline).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'N/A';
         const catClass = exam.category.toLowerCase();
+        const escapedName = exam.name.replace(/'/g, "\\'");
+        
         return `
-            <div class="exam-card animate-in" style="animation-delay:${i*0.05}s">
+            <div class="exam-card animate-in" style="animation-delay: ${i * 0.05}s">
                 <div class="exam-card-header">
                     <div>
                         <div class="exam-name">${exam.name}</div>
                         <span class="exam-category ${catClass}">${exam.category}</span>
                     </div>
-                    <span class="priority-dot ${exam.priority.toLowerCase()}">${exam.priority}</span>
+                    <span class="priority-dot ${exam.priority.toLowerCase()}" title="${exam.priority} Priority"></span>
                 </div>
                 <div class="exam-details">
                     <div class="detail-row">📅 Exam: <strong>${dateStr}</strong></div>
                     <div class="detail-row">⏰ Deadline: <strong>${deadlineStr}</strong></div>
                     <div class="detail-row"><span class="status-badge ${exam.status.toLowerCase()}">${exam.status}</span></div>
                     ${exam.official_website ? `<a href="${exam.official_website}" target="_blank" class="exam-link">🔗 Official Website</a>` : ''}
-                    ${exam.notes ? `<div style="font-size:0.82rem;color:var(--text-muted);margin-top:4px;">📝 ${exam.notes}</div>` : ''}
                 </div>
+                
+                ${exam.exam_date ? `<div class="countdown-container" data-exam-date="${exam.exam_date}" id="countdown-ex-${exam.id}"></div>` : ''}
+                
                 <div class="exam-actions admin-only">
                     <button class="btn btn-sm btn-secondary" onclick="editExam(${exam.id})">✏️ Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${exam.id}, '${exam.name.replace(/'/g, "\\'")}')">🗑️ Delete</button>
+                    <button class="btn btn-sm btn-danger" onclick="openDeleteModal(${exam.id}, '${escapedName}')">🗑️ Delete</button>
                 </div>
             </div>
         `;
