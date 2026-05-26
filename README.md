@@ -8,6 +8,7 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/raja2115/life_importance)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fraja2115%2Flife_importance)
 
 ---
 
