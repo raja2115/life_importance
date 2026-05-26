@@ -90,7 +90,7 @@ Just type naturally — I'll understand! 😊"""
             for keyword in keywords:
                 if keyword in text_lower:
                     return category
-        return 'Banking'  # Default
+        return None
 
     def _add_exam(self, message, db_session):
         """Parse and add an exam from natural language."""
@@ -121,7 +121,7 @@ Just type naturally — I'll understand! 😊"""
                 }
 
             # Detect category
-            category = self._detect_category(clean_name)
+            category = self._detect_category(clean_name) or 'Banking'
 
             # Parse dates
             exam_date = None
@@ -176,10 +176,17 @@ Just type naturally — I'll understand! 😊"""
         query = db_session.query(Exam)
 
         if search_text:
-            query = query.filter(
-                Exam.name.ilike(f'%{search_text}%') |
-                Exam.category.ilike(f'%{search_text}%')
-            )
+            category_match = self._detect_category(search_text)
+            if category_match:
+                query = query.filter(
+                    Exam.name.ilike(f'%{search_text}%') |
+                    (Exam.category == category_match)
+                )
+            else:
+                query = query.filter(
+                    Exam.name.ilike(f'%{search_text}%') |
+                    Exam.category.ilike(f'%{search_text}%')
+                )
 
         exams = query.order_by(Exam.exam_date.asc().nullslast()).limit(10).all()
 
