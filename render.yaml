@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: examtrack-ai
+    runtime: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: admin123
+      - key: PYTHONIOENCODING
+        value: utf-8
+      - key: PYTHON_VERSION
+        value: 3.11.9
