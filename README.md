@@ -7,6 +7,8 @@
 ![SQLite](https://img.shields.io/badge/SQLite-3-blue?logo=sqlite)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/raja2115/life_importance)
+
 ---
 
 ## ✨ Features
