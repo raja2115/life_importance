@@ -227,3 +227,40 @@ if ('IntersectionObserver' in window) {
         document.querySelectorAll('.animate-in').forEach(el => observer.observe(el));
     });
 }
+
+// ─── AUTO-REFRESH/POLLING FOR REAL-TIME UPDATES ────────────────
+setInterval(() => {
+    // Skip if user is actively focusing the search input to avoid UI jumpiness
+    const searchInput = document.getElementById('searchInput');
+    const isSearching = searchInput && document.activeElement === searchInput;
+
+    // 1. Dashboard Page Polling
+    if (typeof loadDashboard === 'function') {
+        const modal = document.getElementById('dashExamModal');
+        const deleteModal = document.getElementById('dashDeleteModal');
+        const isModalOpen = (modal && modal.classList.contains('active')) || (deleteModal && deleteModal.classList.contains('active'));
+        if (!isModalOpen && !isSearching) {
+            loadDashboard();
+        }
+    }
+
+    // 2. Exams Page Polling
+    if (typeof loadExams === 'function') {
+        const modal = document.getElementById('examModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const isModalOpen = (modal && modal.classList.contains('active')) || (deleteModal && deleteModal.classList.contains('active'));
+        if (!isModalOpen && !isSearching) {
+            loadExams();
+        }
+    }
+
+    // 3. Calendar Page Polling
+    if (typeof calendarView !== 'undefined' && calendarView && typeof calendarView.loadExams === 'function') {
+        const modal = document.getElementById('dayModal');
+        const isModalOpen = modal && modal.classList.contains('active');
+        if (!isModalOpen) {
+            calendarView.loadExams().then(() => calendarView.render());
+        }
+    }
+}, 5000);
+
