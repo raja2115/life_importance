@@ -1561,8 +1561,75 @@ textarea.form-control {
     .mobile-menu-btn { display: block; }
     .main-content { padding: 80px 16px 120px; }
     .page-header h1 { font-size: 1.5rem; }
-    .dashboard-grid { grid-template-columns: 1fr; }
-    .category-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Horizontal scrolling for Dashboard stats, categories, and upcoming exams */
+    #statsGrid {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+        gap: 16px;
+        padding: 8px 4px 16px;
+        margin-bottom: 24px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+    #statsGrid::-webkit-scrollbar {
+        height: 6px;
+    }
+    #statsGrid::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: var(--radius-full);
+    }
+    #statsGrid .stat-card {
+        flex: 0 0 280px;
+        scroll-snap-align: start;
+        margin: 0;
+    }
+
+    #categoryGrid {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+        gap: 12px;
+        padding: 8px 4px 16px;
+        margin-bottom: 24px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+    #categoryGrid::-webkit-scrollbar {
+        height: 6px;
+    }
+    #categoryGrid::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: var(--radius-full);
+    }
+    #categoryGrid .category-card {
+        flex: 0 0 140px;
+        scroll-snap-align: start;
+        padding: 16px 8px;
+    }
+
+    #upcomingExams {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+        gap: 16px;
+        padding: 8px 4px 20px;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+    #upcomingExams::-webkit-scrollbar {
+        height: 6px;
+    }
+    #upcomingExams::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: var(--radius-full);
+    }
+    #upcomingExams .exam-card {
+        flex: 0 0 310px;
+        scroll-snap-align: start;
+    }
+
     .form-row { grid-template-columns: 1fr; }
     .exam-table-container { display: none; }
     .exam-cards { grid-template-columns: 1fr; }
@@ -1579,7 +1646,6 @@ textarea.form-control {
 }
 
 @media (max-width: 480px) {
-    .category-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
     .stat-card { padding: 20px; }
     .stat-card .stat-info h3 { font-size: 1.6rem; }
     .countdown-container { gap: 4px; }
@@ -1587,3 +1653,4 @@ textarea.form-control {
     .countdown-unit .number { font-size: 1.1rem; }
     .search-bar { font-size: 0.9rem; padding: 12px 16px 12px 44px; }
 }
+
